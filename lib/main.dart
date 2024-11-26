@@ -1,11 +1,16 @@
+import 'dart:convert';
+import 'dart:developer';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
 void main() {
-  runApp(const MainApp());
+  runApp(MainApp());
 }
 
+// ignore: must_be_immutable
 class MainApp extends StatelessWidget {
-  const MainApp({super.key});
+  MainApp({super.key});
+  String quoteData = "";
 
   @override
   Widget build(BuildContext context) {
@@ -15,12 +20,47 @@ class MainApp extends StatelessWidget {
   }
 }
 
-class AppScreen extends StatelessWidget {
+Future<String> getQuote() async {
+  final Uri uri = Uri.https('api.api-ninjas.com', '/v1/quotes');
+
+  final http.Response response = await http.get(uri,
+      headers: {'x-api-key': 'N3GBHnowDETYID/byVicqQ==Pzz67MSAYJwayc9Z'});
+
+  if (response.statusCode == 200) {
+    return response.body;
+  }
+  return "Fehler";
+}
+
+class AppScreen extends StatefulWidget {
   const AppScreen({
     super.key,
   });
 
-  final String dataStr = " Ts 542";
+  @override
+  State<AppScreen> createState() => _AppScreenState();
+}
+
+class _AppScreenState extends State<AppScreen> {
+  String dataStr = " Ts 542";
+
+  @override
+  void initState() {
+    super.initState();
+    getFirstQuote();
+  }
+
+  void getFirstQuote() async {
+    final String qData = await getQuote();
+    final Map<String, dynamic> allData = jsonDecode(qData)[0];
+    final String firstQuote = allData["quote"];
+    log(firstQuote);
+
+    setState(() {
+      dataStr = firstQuote;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -41,7 +81,11 @@ class AppScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 30),
-            ElevatedButton(onPressed: () {}, child: const Text(" ABFRAGE ")),
+            ElevatedButton(
+                onPressed: () {
+                  getFirstQuote();
+                },
+                child: const Text(" ABFRAGE ")),
           ],
         ),
       ),
